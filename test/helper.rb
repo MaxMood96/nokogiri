@@ -12,7 +12,7 @@
 # - NOKOGIRI_MEMORY_SUITE: read more in test/test_memory_usage.rb
 #
 
-unless ENV["RUBY_MEMCHECK_RUNNING"]
+unless ENV["RUBY_MEMCHECK_RUNNING"] || ENV["NCPU"]
   require "simplecov"
   SimpleCov.start do
     add_filter "/test/"
@@ -49,6 +49,7 @@ warn
 
 require "minitest/autorun"
 require "minitest/benchmark"
+
 if ENV["NCPU"] && !Nokogiri.jruby?
   require "minitest/parallel_fork"
   warn "Running parallel tests with NCPU=#{ENV["NCPU"].inspect}"
@@ -401,12 +402,20 @@ module Nokogiri
   module SAX
     class TestCase < Nokogiri::TestCase
       class Doc < XML::SAX::Document
-        attr_reader :start_elements, :start_document_called
-        attr_reader :end_elements, :end_document_called
-        attr_reader :data, :comments, :cdata_blocks, :start_elements_namespace
-        attr_reader :errors, :warnings, :end_elements_namespace
+        attr_reader :start_elements
+        attr_reader :start_document_called
+        attr_reader :end_elements
+        attr_reader :end_document_called
+        attr_reader :data
+        attr_reader :comments
+        attr_reader :cdata_blocks
+        attr_reader :start_elements_namespace
+        attr_reader :errors
+        attr_reader :warnings
+        attr_reader :end_elements_namespace
         attr_reader :xmldecls
         attr_reader :processing_instructions
+        attr_reader :references
 
         def initialize
           @errors = []
@@ -479,6 +488,13 @@ module Nokogiri
         def processing_instruction(name, content)
           @processing_instructions ||= []
           @processing_instructions << [name, content]
+          super
+        end
+
+        def reference(name, content)
+          @references ||= []
+          @references << [name, content]
+          super
         end
       end
 
